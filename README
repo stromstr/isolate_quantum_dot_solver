@@ -1,0 +1,54 @@
+1. Program:
+
+   isolate quantum dots system solver
+
+2. History:
+
+   2016-3-19 Wang Yuandong 4th release
+
+3. Licence:
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation
+
+   This project is deposited in GitHub:
+   github.com/stromstr/
+
+4. Contributing to "iso":
+
+   If you make improvements to this program, you are encouraged to
+   share them with other users. Bug reports (and fixes) are very welcome
+   as well.  The contact information is in the next section.
+
+5. Contact information:
+
+   Wang Yuandong
+   Department of Physics,
+   Renmin University of China,
+   Zhongguancun Ave.59,
+   Beijing 100872, China
+
+   Email: yd_wang@ruc.edu.cn
+
+6. Compiling and dependencies
+
+   Intel MKL libraries are required to compile the code, specify the absulte
+   path of MKL in code/Makefile and just do "make" to compile it. Also, the
+   final excutable file "hsms" should be changed to $YOURPATH/iso*.*/hsms.
+
+7. Physical quantities calculating
+
+   Varies of physical quantities of isolate QD system could be evaluated in "iso",
+   each of them are given a clear name such as "corr"(correlation function), you
+   can find how the are defined in "/code/spec" or even add new quantity that has
+   not been included in it.
+
+   Basicly, you can set the parameters in input and run "hsms" to get the results.
+   The meaning of the paremeters has been clarified in input and similarly you can
+   add new parameters in it.
+
+
+
+
+
