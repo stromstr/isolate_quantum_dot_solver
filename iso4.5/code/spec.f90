@@ -414,10 +414,11 @@ end if
 !
 if (dos) then
   open(unit=12, file="jw.dat")
-  call calcams(norbs, nspin, 1, 1, lmat, tmp)
-  cmtmp1(1:lmat, 1:lmat) = dcmplx(tmp(1:lmat, 1:lmat), 0.d0)   !c1_up^dagger
-  call calcams(norbs, nspin, 1, 2, lmat, tmp)
-  cmtmp2(1:lmat, 1:lmat) = dcmplx(tmp(1:lmat, 1:lmat), 0.d0)   !c1_down^dagger
+  cmtmp1(1:lmat, 1:lmat) = dcmplx(amsall(1:lmat, 1:lmat, 1, 1), 0.d0)   !c1_up
+!  call calcams(norbs, nspin, 1, 1, lmat, tmp)
+!  cmtmp1(1:lmat, 1:lmat) = dcmplx(tmp(1:lmat, 1:lmat), 0.d0)   !c1_up^dagger
+!  call calcams(norbs, nspin, 1, 2, lmat, tmp)
+!  cmtmp2(1:lmat, 1:lmat) = dcmplx(tmp(1:lmat, 1:lmat), 0.d0)   !c1_down^dagger
   do n=1, lmat
     heen = heen + exp(-w(n)/temp)
   end do
