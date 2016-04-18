@@ -1,6 +1,6 @@
-3            !norbs(i.e. N dots/levels/orbitals)
+2            !norbs(i.e. N dots/levels/orbitals)
 F            !whether exciton type(electron-hole interaction, for most situation you do not need it and set as Faulse)
-F            !whether calculate DOS(by default is spin up of spin 1)
+T            !whether calculate DOS(by default is spin up of spin 1)
 T            !whether print eigenvalues
 T            !whether vary with energy level of dot2(For specific purpose of auther, you can just ignore it)
 0.1          !temperature(multiplied by Bolzmann constant Kb)
@@ -13,10 +13,10 @@ T            !whether vary with energy level of dot2(For specific purpose of aut
 1.0          !uu1
 1.0          !uu2
 1.0          !uu3
-0.1          !t12
-0.1          !t13
+0.0          !t12
+0.0          !t13
 0.0          !t23
-0.0          !u12
+0.2          !u12
 0.0          !u13
 0.0          !u23
 0.0          !j12

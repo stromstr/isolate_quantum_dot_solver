@@ -30,7 +30,7 @@ logical*4 :: exc, energ, dos, varie2
 real*8, allocatable :: rw(:)
 real*8, allocatable :: nu1(:)
 real*8, allocatable :: nu2(:)
-complex*16 :: eta = (1.d-6, 0.d0)
+complex*16 :: eta = (1.d-7, 0.d0)
 complex*16 :: heen, green, freq
 real*8 :: hop1
 !real*8 :: temp, e1up, e1down, e2up, e2down, e3up, e3down, uu1, uu2, uu3, t12, t13, t23, u12, u13, u23, j12, j23, rho
@@ -183,12 +183,12 @@ else if (norbs==2) then
     call zgemm('c', 'n', lmat, lmat, lmat, cunity, cmtmp2, lmat, cmtmp4, lmat, &
                 cunity, cmtmp11, lmat)                                     
     call zgemm('c', 'n', lmat, lmat, lmat, cunity, cmtmp4, lmat, cmtmp2, lmat, &
-                cunity, cmtmp11, lmat)                              
+                cunity, cmtmp11, lmat)                             
     hs = hs + t12 * cmtmp11
     cmtmp9 = cmtmp5 + cmtmp6
     cmtmp10= cmtmp7 + cmtmp8
     call zgemm('n', 'n', lmat, lmat, lmat, cunity, cmtmp9, lmat, cmtmp10, lmat, &
-                czero, cmtmp11, lmat) 
+                czero, cmtmp11, lmat)                            !n1*n2
     hs = hs + u12 * cmtmp11                              
   open(unit=20, file="hss")
     do n=1, lmat
@@ -427,7 +427,7 @@ if (dos) then
   call zgemm('c', 'c', lmat, lmat, lmat, cunity, vr, lmat, cmtmp1, lmat, czero, tmp3, lmat)
   call zgemm('n', 'n', lmat, lmat, lmat, cunity, tmp3, lmat, vr, lmat, czero, tmp4, lmat)
   freq = (-2.d0, 0.d0)
-  do i=1, 800
+  do i=1, 40000
     do n=1, lmat
       do m=1, lmat
         green=green+(exp(-w(n)/temp)+exp(-w(m)/temp))*tmp2(n,m)*tmp4(m,n)/((freq+ccompl*eta+w(n)-w(m))*heen)
@@ -437,7 +437,7 @@ if (dos) then
     write(12,*) real(freq), rho
     rho =0.d0
     green =(0.d0, 0.d0)
-    freq = freq + 0.000005
+    freq = freq + 0.0001
   end do
 end if
 deallocate(cmtmp5, cmtmp6, cmtmp7, cmtmp8, cmtmp1, cmtmp2, cmtmp3, cmtmp4, cmtmp9, cmtmp10, cmtmp11, cmtmp12, cmtmp13, cmtmp14, cmtmp15, STAT = istat)
@@ -445,163 +445,6 @@ deallocate(tmp1, tmp5, tmp2, tmp3, tmp4, tmp, ams, amsall, hs, hss, vl, vr, work
 deallocate(dmtmp1, dmtmp2, dmtmp3, dmtmp4, dmtmp5, rw, nu1, nu2, sopr, pauli, ams, amsall, STAT = istat)
 stop
 end
-!
-subroutine calcoccup(occtmp, occout)
-use globle
-implicit none
-!
-complex*16 :: occtmp(lmat, lmat)
-complex*16 :: cc1, cc2
-real*8  :: occout
-integer :: n, m
-cc1 = (0.d0, 0.d0)
-cc2 = (0.d0, 0.d0)
-!write(16,*) '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-!do n=1, lmat
-!  do m=1, lmat
-!    write(16,*) occtmp(n,m)
-!  end do
-!end do
-call zgemm('c', 'n', lmat, lmat, lmat, cunity, vr, lmat, occtmp, lmat, czero, cmtmp4, lmat)
-call zgemm('n', 'n', lmat, lmat, lmat, cunity, cmtmp4, lmat, vr, lmat, czero, cmtmp5, lmat)
-!write(16,*)'~~~~~~~~~~~~~~~~~~~~~~~~~'
-!do n=1, lmat
-!  write(16,*) cmtmp5(n,n)
-!end do
-!write(16,*) '~~~~~~~~~~~~~~~~~~~~~~'
-do n=1, lmat
-  cc1 = cc1 + cmtmp5(n,n) * exp(-w(n)/temp)
-end do
-!
-do n=1, lmat
-  cc2 = cc2 + exp(-w(n)/temp)
-end do
-occout = real(cc1) / real(cc2)
-end subroutine calcoccup
-!
-subroutine buildspin
-use globle
-implicit none
-integer :: ni, nj, istat, ixyz, iorbs
-real*8 :: dtmp1
-!
-!allocate(dmtmp1(lmat, lmat), STAT=istat)
-!allocate(dmtmp2(lmat, lmat), STAT=istat)
-!allocate(dmtmp3(lmat, lmat), STAT=istat)
-!allocate(dmtmp4(lmat, lmat), STAT=istat)
-!allocate(dmtmp5(lmat, lmat), STAT=istat)
-allocate(pauli(2,2,3), STAT=istat)
-allocate(sopr(lmat,lmat,3,norbs), STAT=istat)
-!  x
-pauli(1,1,1) = czero                            ! 1/2 * ( 0  1 )
-pauli(1,2,1) = dcmplx(0.5d0, 0.d0)              !       ( 1  0 )
-pauli(2,1,1) = dcmplx(0.5d0, 0.d0)
-pauli(2,2,1) = czero
-!  y
-pauli(1,1,2) = czero                            ! 1/2 * ( 0 -i )
-pauli(1,2,2) = dcmplx(0.d0, -0.5d0)             !       ( i  0 )
-pauli(2,1,2) = dcmplx(0.d0,  0.5d0)
-pauli(2,2,2) = czero
-!  z
-pauli(1,1,3) = dcmplx(0.5d0, 0.d0)              ! 1/2 * ( 1  0 )
-pauli(1,2,3) = czero                            !       ( 0 -1 ) 
-pauli(2,1,3) = czero
-pauli(2,2,3) = dcmplx(-0.5d0, 0.d0)
-!
-do iorbs=1,norbs
-   do ixyz=1,3
-      cmtmp1(1:lmat,1:lmat) = czero
-      do ni=1,2
-        do nj=1,2
-!             if ( cdabs(pauli(ni,nj, ixyz)) .lt. dpico) cycle
-             cmtmp2(1:lmat, 1:lmat) = dcmplx(amsall(1:lmat, 1:lmat, iorbs, ni), 0.d0)
-             !call calcams(norbs, nspin, iorbs, nj, lmat, tmp)
-             cmtmp3(1:lmat, 1:lmat) = dcmplx(amsall(1:lmat, 1:lmat, iorbs, nj), 0.d0)   
-             call zgemm('c', 'n', lmat, lmat, lmat, pauli(ni,nj,ixyz), cmtmp2, lmat,  &
-                        cmtmp3, lmat, cunity, cmtmp1, lmat)
-         end do
-      end do
-      sopr(1:lmat,1:lmat,ixyz,iorbs) = cmtmp1(1:lmat,1:lmat)
-   end do
-end do
-write(10,*) 'check commutation relation [Sx, Sy] = iSz, [Sy, Sz] = iSx, [Sz, Sx] = iSy'
-do iorbs=1,norbs
-   cmtmp1(1:lmat,1:lmat) = sopr(1:lmat,1:lmat,1,iorbs)
-   cmtmp2(1:lmat,1:lmat) = sopr(1:lmat,1:lmat,2,iorbs)
-   cmtmp3(1:lmat,1:lmat) = sopr(1:lmat,1:lmat,3,iorbs)
-! [x, y]
-   call zgemm('n', 'n', lmat, lmat, lmat,  cunity, cmtmp1, lmat, cmtmp2, lmat,  &
-               czero, cmtmp4, lmat)
-   call zgemm('n', 'n', lmat, lmat, lmat, -cunity, cmtmp2, lmat, cmtmp1, lmat,  &
-              cunity, cmtmp4, lmat)
-   cmtmp5(1:lmat,1:lmat) = cmtmp4(1:lmat,1:lmat) - eye * cmtmp3(1:lmat,1:lmat)
-   call cmaxmat(lmat, lmat, cmtmp5, lmat, dtmp1)
-   if (dtmp1 .ge. dpico) then
-      write(10,*)'buildspin3d: error! [Sx, Sy] = iSz violated for iorbs = ', iorbs
-      write(10,*)'buildspin3d: largest deviation = ', dtmp1
-      stop
-   end if
-! [y, z]
-   call zgemm('n', 'n', lmat, lmat, lmat,  cunity, cmtmp2, lmat, cmtmp3, lmat,  &
-               czero, cmtmp4, lmat)
-   call zgemm('n', 'n', lmat, lmat, lmat, -cunity, cmtmp3, lmat, cmtmp2, lmat,  &
-              cunity, cmtmp4, lmat)
-   cmtmp5(1:lmat,1:lmat) = cmtmp4(1:lmat,1:lmat) - eye * cmtmp1(1:lmat,1:lmat)
-   call cmaxmat(lmat, lmat, cmtmp5, lmat, dtmp1)
-   if (dtmp1 .ge. dpico) then
-      write(10,*)'buildspin3d: error! [Sy, Sz] = iSx violated for iorbs = ', iorbs
-      write(10,*)'buildspin3d: largest deviation = ', dtmp1
-      stop
-   end if
-! [z, x]
-   call zgemm('n', 'n', lmat, lmat, lmat,  cunity, cmtmp3, lmat, cmtmp1, lmat,  &
-               czero, cmtmp4, lmat)
-   call zgemm('n', 'n', lmat, lmat, lmat, -cunity, cmtmp1, lmat, cmtmp3, lmat,  &
-              cunity, cmtmp4, lmat)
-   cmtmp5(1:lmat,1:lmat) = cmtmp4(1:lmat,1:lmat) - eye * cmtmp2(1:lmat,1:lmat)
-   call cmaxmat(lmat, lmat, cmtmp5, lmat, dtmp1)
-   if (dtmp1 .ge. dpico) then
-      write(10,*)'buildspin3d: error! [Sz, Sx] = iSy violated for iorbs = ', iorbs
-      write(10,*)'buildspin3d: largest deviation = ', dtmp1
-      stop
-   end if
-   write(10,*) 'commutation checked for orbs:', iorbs
-end do
-end subroutine
-!
-subroutine calcspinproduct(iorbs, iorbs2, dout)
-use globle
-implicit none
-integer :: iorbs, iorbs2, n, m
-real*8  :: dout
-complex*16 :: rr1, rr2
-!
-dout = 0.d0
-rr1  = (0.d0, 0.d0)
-rr2  = (0.d0, 0.d0)
-call zgemm('n', 'n', lmat, lmat, lmat, cunity, sopr(1:lmat,1:lmat,1,iorbs), lmat,  &
-            sopr(1:lmat,1:lmat,1,iorbs2), lmat, czero,  cmtmp1, lmat)
-call zgemm('n', 'n', lmat, lmat, lmat, cunity, sopr(1:lmat,1:lmat,2,iorbs), lmat,  &
-            sopr(1:lmat,1:lmat,2,iorbs2), lmat, cunity, cmtmp1, lmat)
-call zgemm('n', 'n', lmat, lmat, lmat, cunity, sopr(1:lmat,1:lmat,3,iorbs), lmat,  &
-            sopr(1:lmat,1:lmat,3,iorbs2), lmat, cunity, cmtmp1, lmat)
-!
-call zgemm('c', 'n', lmat, lmat, lmat, cunity, vr, lmat, cmtmp1, lmat, czero, cmtmp2, lmat)
-call zgemm('n', 'n', lmat, lmat, lmat, cunity, cmtmp2, lmat, vr, lmat, czero, cmtmp3, lmat)
-write(16,*) '~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-do n=1, lmat
-  write(16,*) cmtmp3(n,n)
-end do
-do n=1, lmat
-  rr1 = rr1 + cmtmp3(n,n) * exp(-w(n)/temp)
-end do
-!
-do n=1, lmat
-  rr2 = rr2 + exp(-w(n)/temp)
-end do
-dout =  real(rr1) / real(rr2)
-end subroutine calcspinproduct
-!
 subroutine cmaxmat(dim1, dim2, cmat, ldm, dmax)
 implicit none
 !
