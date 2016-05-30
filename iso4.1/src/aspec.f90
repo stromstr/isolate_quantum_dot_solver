@@ -1,39 +1,18 @@
-module globle 
-implicit none 
-complex*16, save, allocatable :: cmtmp1(:,:), cmtmp2(:,:), cmtmp3(:,:), cmtmp4(:,:), cmtmp5(:,:), cmtmp6(:,:), cmtmp7(:,:), cmtmp8(:,:)
-complex*16, save, allocatable :: cmtmp9(:,:), cmtmp10(:,:), cmtmp11(:,:), cmtmp12(:,:), cmtmp13(:,:), cmtmp14(:,:), cmtmp15(:,:) 
-real*8, save, allocatable :: dmtmp1(:,:), dmtmp2(:,:), dmtmp3(:,:), dmtmp4(:,:), dmtmp5(:,:)
-complex*16, save, allocatable :: tmp1(:,:), tmp2(:,:), tmp3(:,:), tmp4(:,:), tmp5(:,:)
-complex*16, allocatable :: hs(:,:), hss(:,:), w(:), vl(:,:), vr(:,:), work(:), rwork(:)
-complex*16, save, allocatable :: sopr(:,:,:,:)
-complex*16, save, allocatable :: pauli(:,:,:)            ! Pauli matrices
-complex*16, save :: czero = (0.d0, 0.d0)
-complex*16, save :: cunity = (1.d0, 0.d0)
-complex*16, save :: eye = (0.d0, 1.d0)
-complex*16, save :: ccompl = (0.d0, 1.d0)
-real*8, save :: hbar = 0.65821
-!real*8, save :: dpico = 1.d-12
-real*8, parameter :: dpico = 1.d-12, dnano = 1.d-9
-real*8, save, allocatable :: tmp(:,:), ams(:,:)
-real*8, save, allocatable :: amsall(:,:,:,:)
-real*8 :: temp, e1up, e1down, e2up, e2down, e3up, e3down, uu1, uu2, uu3, t12, t13, t23, u12, u13, u23, j12, j23, rho
-integer, save :: nspin, lwmax, norbs, lmat
-end module
 !
 program sp100
 use globle
 implicit none
 integer :: lwork, info, n, m, i
-integer :: istat
+integer :: istat, idos
 logical*4 :: exc, energ, dos, varie2
-!complex*16, allocatable :: hs(:,:), w(:), vl(:,:), vr(:,:), work(:), rwork(:)
 real*8, allocatable :: rw(:)
 real*8, allocatable :: nu1(:)
 real*8, allocatable :: nu2(:)
 complex*16 :: eta = (1.d-7, 0.d0)
 complex*16 :: heen, green, freq
 real*8 :: hop1
-!real*8 :: temp, e1up, e1down, e2up, e2down, e3up, e3down, uu1, uu2, uu3, t12, t13, t23, u12, u13, u23, j12, j23, rho
+namelist /ldos/ dos, idos
+namelist /hamil/ e1up, e1down, e2up, e2down, e3up, e3down, uu1, uu2, uu3, t12, t13, t23, u12, u13, u23, j12, j23
 open(unit=10, file="log")
 open(unit=11, file="input")
 open(unit=16, file="test")
@@ -89,27 +68,12 @@ dos = .true.
 energ = .true.
 varie2 = .true.
 read(11, *) exc
-read(11, *) dos
+!read(11, *) dos
 read(11, *) energ
 read(11, *) varie2
 read(11, *) temp
-read(11, *) e1up
-read(11, *) e1down
-read(11, *) e2up
-read(11, *) e2down
-read(11, *) e3up
-read(11, *) e3down
-read(11, *) uu1
-read(11, *) uu2
-read(11, *) uu3
-read(11, *) t12
-read(11, *) t13
-read(11, *) t23
-read(11, *) u12
-read(11, *) u13
-read(11, *) u23
-read(11, *) j12
-read(11, *) j23
+read(11, hamil, end=110)
+110 continue
 !
 !call buildspin
 call buildoperator
@@ -412,9 +376,17 @@ else
   write(17, '(A4, I1, 3x, e15.6e3)') 'orbs', 3, hop1
 end if
 !
+read(11, ldos, end=111)
+111 continue
 if (dos) then
   open(unit=12, file="jw.dat")
-  cmtmp1(1:lmat, 1:lmat) = dcmplx(amsall(1:lmat, 1:lmat, 1, 1), 0.d0)   !c1_up
+  if(idos .eq. 1) then
+    cmtmp1(1:lmat, 1:lmat) = dcmplx(amsall(1:lmat, 1:lmat, 1, 1), 0.d0)   !c1_up
+  else if(idos .eq. 2) then
+    cmtmp1(1:lmat, 1:lmat) = dcmplx(amsall(1:lmat, 1:lmat, 2, 1), 0.d0)   !c2_up
+  else if(idos .eq. 3) then
+    cmtmp1(1:lmat, 1:lmat) = dcmplx(amsall(1:lmat, 1:lmat, 3, 1), 0.d0)   !c3_up
+  end if
 !  call calcams(norbs, nspin, 1, 1, lmat, tmp)
 !  cmtmp1(1:lmat, 1:lmat) = dcmplx(tmp(1:lmat, 1:lmat), 0.d0)   !c1_up^dagger
 !  call calcams(norbs, nspin, 1, 2, lmat, tmp)
@@ -445,23 +417,6 @@ deallocate(tmp1, tmp5, tmp2, tmp3, tmp4, tmp, ams, amsall, hs, hss, vl, vr, work
 deallocate(dmtmp1, dmtmp2, dmtmp3, dmtmp4, dmtmp5, rw, nu1, nu2, sopr, pauli, ams, amsall, STAT = istat)
 stop
 end
-subroutine cmaxmat(dim1, dim2, cmat, ldm, dmax)
-implicit none
-!
-integer,    intent(in)  :: dim1, dim2, ldm
-complex*16, intent(in)  :: cmat(ldm,*)
-real*8,     intent(out) :: dmax
-!
-integer                 :: ni,nj
-!
-dmax = 0.d0
-do nj=1,dim2
- do ni=1,dim1
-  dmax = max(dmax, cdabs(cmat(ni,nj)))
- enddo
-enddo
-!
-end subroutine cmaxmat
 !
 subroutine BUBBLE_SORT(rw,lmat)
   implicit none
